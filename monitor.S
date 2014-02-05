@@ -396,9 +396,9 @@ EnterARM(do_smc)
  * Helper.
  */
 EnterARM(memcpy)
-	ldr     r3, [r1], #4
-	str     r3, [r0], #4
-	subs    r2, r2, #4
+    ldr     r3, [r1], #4
+    str     r3, [r0], #4
+    subs    r2, r2, #4
     bgt     _memcpy
     bx      lr
 
