@@ -2,11 +2,11 @@
  * Copyright 2014, winocm. <winocm@icloud.com>
  */
 /*
- * TrustZone stub.
+ * TrustZone stub for iOS devices.
  *
  * S3C uart setup print from the Linux kernel.
  *
- * $ arm-none-eabi-gcc monitor.S -nostdlib -Ttext=0x5FE00000 -o monitor -DPAGETABLE_OFFSET=0x84000000
+ * $ arm-none-eabi-gcc monitor.S -nostdlib -Ttext=0x84000000 -o monitor -DPAGETABLE_OFFSET=0x5FF80000
  */
 
 #include "asm_help.h"
@@ -183,8 +183,30 @@ EnterARM(reset_secure_tramp)
     ldr     r0, =_tzboot_nswelcome
     bl      _puts
 
+    mov     r0, #0
+    mcr     p15, 0, r0, c12, c0, 0
+
 .Lbootimag:
-#error need a non-secure image load here.
+    /* Disable caches and MMU. */
+    mrc    p15, 0, r0, c1, c0, 0
+    bic    r0, r0, #(1 << 0) | (1 << 2)
+    bic    r0, r0, #(1 << 12) | (1 << 11)
+    mcr    p15, 0, r0, c1, c0, 0
+
+    /* Copy the iBEC. */
+    ldr    r1, =ibec
+    ldr    r0, =0x43000000
+    ldr    r2, =ibec_len
+    ldr    r2, [r2]
+    bl     _memcpy
+
+    /* Arbitrary stall to make sure all operations complete before. */
+    mov    r0, #0
+    mcr    p15, 0, r0, c7, c5, 0
+
+    /* Branch! */
+    ldr    r0, =0x43000000
+    bx     r0
 
     /* xxx todo */
     b       .
